@@ -34,11 +34,13 @@ U8G2_FOR_ADAFRUIT_GFX u8g2;
 #define PANEL_CHAIN 1  // Total number of panels chained one to another
 
 #define ROW_HEIGHT 8
+#define BOX_WIDTH 21
+#define MINUTES_X BOX_WIDTH + 1
 
 // MatrixPanel_I2S_DMA dma_display;
 MatrixPanel_I2S_DMA *dma_display = nullptr;
 
-uint16_t u6Purple, u9Orange, tramYellow, white, black;
+uint16_t u6Purple, u9Orange, tramYellow, white, black, red;
 
 void setup()
 {
@@ -60,6 +62,7 @@ void setup()
 
     white = dma_display->color565(255, 255, 255);
     black = dma_display->color565(0, 0, 0);
+    red = dma_display->color565(255, 0, 0);
     u6Purple = dma_display->color565(140, 109, 171);
     u9Orange = dma_display->color565(238, 118, 30);
     tramYellow = dma_display->color565(240, 215, 33);
@@ -69,11 +72,12 @@ void setup()
     int16_t x = 5;
     int16_t y = 7;
 
-    dma_display->fillRect(0, 0, 21, 8, u6Purple);
+    dma_display->fillRect(0, 0, BOX_WIDTH, 8, u6Purple);
     dma_display->fillRect(5, 1, 11, 6, black);
-    dma_display->fillRect(0, ROW_HEIGHT, 21, 8, u9Orange);
+    dma_display->fillRect(0, ROW_HEIGHT, BOX_WIDTH, 8, u9Orange);
     dma_display->fillRect(5, 1 + ROW_HEIGHT, 11, 6, black);
 
+    // Stations (left side)
     u8g2.setFont(font);
     u8g2.setForegroundColor(white);
     u8g2.setCursor(x, y);
@@ -81,10 +85,23 @@ void setup()
     u8g2.setCursor(x, y + ROW_HEIGHT);
     u8g2.print(F("U9"));
     u8g2.setForegroundColor(tramYellow);
-    u8g2.setCursor(x - 1, y + 2 * ROW_HEIGHT);
+    u8g2.setCursor(x - 1, y + ROW_HEIGHT * 2);
     u8g2.print(F("M13"));
-    u8g2.setCursor(x, y + 3 * ROW_HEIGHT);
+    u8g2.setCursor(x, y + ROW_HEIGHT * 3);
     u8g2.print(F("50"));
+
+    // Minute displays (right side)
+    u8g2.setForegroundColor(white);
+    // U6
+    u8g2.setCursor(MINUTES_X, y + ROW_HEIGHT * 0);
+    u8g2.print(F("1,15,23"));
+    u8g2.setCursor(MINUTES_X, y + ROW_HEIGHT * 1);
+    u8g2.print(F("55,55,55"));
+    u8g2.setCursor(MINUTES_X, y + ROW_HEIGHT * 2);
+    u8g2.setForegroundColor(red);
+    u8g2.print(F("3"));
+    u8g2.setForegroundColor(white);
+    u8g2.print(F(",13,25"));
 }
 
 void loop()
