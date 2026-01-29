@@ -16,27 +16,11 @@ void setup()
 
 void loop()
 {
-    // Test connection every 30 seconds
+    // Fetch departures every 15 seconds
     static unsigned long lastCheck = 0;
-    if (millis() - lastCheck >= 30000)
+    if (millis() - lastCheck >= 15000)
     {
         lastCheck = millis();
-
-        Serial.print("Testing connection... ");
-        HTTPClient http;
-        http.begin("http://www.google.com");
-        int httpCode = http.GET();
-        if (httpCode > 0)
-        {
-            Serial.print("OK (HTTP ");
-            Serial.print(httpCode);
-            Serial.println(")");
-        }
-        else
-        {
-            Serial.print("Failed: ");
-            Serial.println(http.errorToString(httpCode));
-        }
-        http.end();
+        getDepartureMinutes();
     }
 }
