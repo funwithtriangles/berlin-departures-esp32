@@ -74,7 +74,7 @@ void setup()
     dma_display->fillRect(0, ROW_HEIGHT, 21, 8, u9Orange);
     dma_display->fillRect(5, 1 + ROW_HEIGHT, 11, 6, black);
 
-    u8g2.setFont(unifont_custom);
+    u8g2.setFont(font);
     u8g2.setForegroundColor(white);
     u8g2.setCursor(x, y);
     u8g2.print(F("U6"));
@@ -83,7 +83,7 @@ void setup()
     u8g2.setForegroundColor(tramYellow);
     u8g2.setCursor(x - 1, y + 2 * ROW_HEIGHT);
     u8g2.print(F("M13"));
-    u8g2.setCursor(x + 1, y + 3 * ROW_HEIGHT);
+    u8g2.setCursor(x, y + 3 * ROW_HEIGHT);
     u8g2.print(F("50"));
 }
 
