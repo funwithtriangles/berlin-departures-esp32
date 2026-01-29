@@ -95,13 +95,18 @@ void setup()
     // U6
     u8g2.setCursor(MINUTES_X, y + ROW_HEIGHT * 0);
     u8g2.print(F("1,15,23"));
+    // U9
     u8g2.setCursor(MINUTES_X, y + ROW_HEIGHT * 1);
     u8g2.print(F("55,55,55"));
+    // M13
     u8g2.setCursor(MINUTES_X, y + ROW_HEIGHT * 2);
     u8g2.setForegroundColor(red);
     u8g2.print(F("3"));
     u8g2.setForegroundColor(white);
     u8g2.print(F(",13,25"));
+    // 50
+    u8g2.setCursor(MINUTES_X, y + ROW_HEIGHT * 3);
+    u8g2.print(F("7,27,47"));
 }
 
 void loop()
