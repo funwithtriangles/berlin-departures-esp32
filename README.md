@@ -2,6 +2,25 @@
 
 Arduino code for a simple home departures board, designed for a 64x32 LED panel.
 
+## Setup
+
+### WiFi Configuration
+
+1. Copy the example credentials file:
+
+   ```bash
+   cp credentials.example.h credentials.h
+   ```
+
+2. Edit `credentials.h` with your WiFi network details:
+   ```cpp
+   const char* ssid = "YourNetworkName";
+   const char* password = "YourPassword";
+   ```
+
+> [!NOTE]
+> The `credentials.h` file is gitignored to keep your WiFi credentials private.
+
 ## LED Panel
 
 It's a 64x32 RGB LED panel, designed to have chaining capabilities for large wall displays, in this project we're just using one though. I ordered mine from Ali Express, they all seem to be somewhat similar.
