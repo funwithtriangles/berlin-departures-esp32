@@ -15,6 +15,9 @@ void initWifi()
     Serial.println();
     Serial.print("Connecting to WiFi: ");
     Serial.println(ssid);
+    // Set a static DNS server (Google DNS) for better stability
+    // Use WiFi.config to set only DNS, keeping IP/gateway/subnet dynamic (DHCP)
+    WiFi.config(IPAddress(0,0,0,0), IPAddress(0,0,0,0), IPAddress(0,0,0,0), IPAddress(8,8,8,8));
     WiFi.begin(ssid, password);
     while (WiFi.status() != WL_CONNECTED)
     {
@@ -25,6 +28,11 @@ void initWifi()
     Serial.println("WiFi connected!");
     Serial.print("IP address: ");
     Serial.println(WiFi.localIP());
+
+    wifi_mode_t mode = WiFi.getMode();
+    Serial.print("Current WiFi mode: ");
+    Serial.println(mode == WIFI_STA ? "WIFI_STA" : mode == WIFI_AP ? "WIFI_AP" : "WIFI_AP_STA");
+
     // Test connection to google.com using WiFiClientSecure
     Serial.print("Testing connection to google.com... ");
     WiFiClientSecure client;
