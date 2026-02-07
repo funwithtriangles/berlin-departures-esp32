@@ -79,9 +79,9 @@ void initDisplay()
     // Stations (left side)
     u8g2.setFont(font);
     u8g2.setForegroundColor(white);
-    u8g2.setCursor(x, y);
+    u8g2.setCursor(x, y + ROW_HEIGHT * 0);
     u8g2.print(F("U6"));
-    u8g2.setCursor(x, y + ROW_HEIGHT);
+    u8g2.setCursor(x, y + ROW_HEIGHT * 1);
     u8g2.print(F("U9"));
     u8g2.setForegroundColor(tramYellow);
     u8g2.setCursor(x - 1, y + ROW_HEIGHT * 2);
@@ -101,7 +101,7 @@ void displayMinutes(int row, const std::vector<int>& minutes) {
         u8g2.print(minutes[i]);
         if (i < minutes.size() - 1) 
 
-        if (i == 2) break; // Limit to 3
+        if (i == 3) break; // Limit to 4
         u8g2.print(",");
     }
 }
