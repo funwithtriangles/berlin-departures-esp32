@@ -1,12 +1,23 @@
 #include <WiFiUdp.h>
 #include <NTPClient.h>
 #include <time.h>
+
+#include <WiFi.h>
+#include <WiFiClientSecure.h>
+#include <HTTPClient.h>
+#include <ArduinoJson.h>
+#include <StreamUtils.h>
+#include "credentials.h"
+
+#define LEO 900009102
+#define TIMEZONE_OFFSET 3600 // Berlin time offset in seconds
+
 // Global NTP client
 WiFiUDP ntpUDP;
 NTPClient timeClient(ntpUDP);
 
-// Parses an ISO8601 timestamp (e.g. "2024-01-29T19:32:00+01:00") and returns minutes from now as int
-int getMinutesFromNow(const char* when) {
+// Converts an ISO8601 timestamp (e.g. "2024-01-29T19:32:00+01:00") to epoch seconds (UTC)
+time_t getEpochFromTimestamp(const char* when) {
     struct tm tm;
     memset(&tm, 0, sizeof(tm));
     int year, month, day, hour, min, sec, tzh = 0, tzm = 0;
@@ -29,27 +40,20 @@ int getMinutesFromNow(const char* when) {
         else eventTime += offset;
     }
     if (eventTime == -1) return -1;
+    return eventTime;
+}
+
+// Returns minutes from now for a given ISO8601 timestamp
+int getMinutesFromNow(const char* when) {
+    time_t eventTime = getEpochFromTimestamp(when);
+    if (eventTime == -1) return -1;
     time_t now = time(NULL);
     Serial.print("Now: ");
     Serial.println(ctime(&now));
-    int diff = (int)difftime(eventTime, now) / 60;
-    return diff;
+    return eventTime - now;
 }
-#ifndef BVG_CONNECT_H
-#define BVG_CONNECT_H
 
-#include <WiFi.h>
-#include <WiFiClientSecure.h>
-#include <HTTPClient.h>
-#include <ArduinoJson.h>
-#include <StreamUtils.h>
-#include "credentials.h"
-
-#define LEO 900009102
-#define TIMEZONE_OFFSET 3600 // Berlin time offset in seconds
-
-void initWifi()
-{
+void initWifi() {
     Serial.println();
     Serial.print("Connecting to WiFi: ");
     Serial.println(ssid);
@@ -71,8 +75,6 @@ void initWifi()
     Serial.print("Current WiFi mode: ");
     Serial.println(mode == WIFI_STA ? "WIFI_STA" : mode == WIFI_AP ? "WIFI_AP" : "WIFI_AP_STA");
 
-
-
     // Test connection to google.com using WiFiClientSecure
     Serial.print("Testing connection to google.com... ");
     WiFiClientSecure client;
@@ -86,7 +88,7 @@ void initWifi()
 
     // Start and sync NTP client
     timeClient.begin();
-    timeClient.setTimeOffset(0); // Use UTC, let ISO8601 parsing handle timezone
+    timeClient.setTimeOffset(TIMEZONE_OFFSET); // Use UTC, let ISO8601 parsing handle timezone
     while (!timeClient.update()) {
         delay(100);
     }
@@ -96,8 +98,7 @@ void initWifi()
     settimeofday(&tv, nullptr);
 }
 
-void getDepartureMinutes()
-{
+void getDepartureMinutes() {       
     Serial.print("Fetching departures from BVG API... ");
     WiFiClientSecure client;
     client.setInsecure();
@@ -154,5 +155,3 @@ void getDepartureMinutes()
     }
     Serial.println("------------------\n");
 }
-
-#endif
