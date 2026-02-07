@@ -9,7 +9,6 @@
 #include <StreamUtils.h>
 #include "credentials.h"
 
-#define LEO 900009102
 #define TIMEZONE_OFFSET 3600 // Berlin time offset in seconds
 
 // Global NTP client
@@ -48,9 +47,7 @@ int getMinutesFromNow(const char* when) {
     time_t eventTime = getEpochFromTimestamp(when);
     if (eventTime == -1) return -1;
     time_t now = time(NULL);
-    Serial.print("Now: ");
-    Serial.println(ctime(&now));
-    return eventTime - now;
+    return (eventTime - now) / 60;
 }
 
 void initWifi() {
@@ -88,7 +85,7 @@ void initWifi() {
 
     // Start and sync NTP client
     timeClient.begin();
-    timeClient.setTimeOffset(TIMEZONE_OFFSET); // Use UTC, let ISO8601 parsing handle timezone
+    // timeClient.setTimeOffset(TIMEZONE_OFFSET); // Use UTC, let ISO8601 parsing handle timezone
     while (!timeClient.update()) {
         delay(100);
     }
@@ -98,7 +95,8 @@ void initWifi() {
     settimeofday(&tv, nullptr);
 }
 
-void getDepartureMinutes() {       
+#include <vector>
+std::vector<int> getDepartureMinutes(const char* transportType, const char* station, const char* direction) {
     Serial.print("Fetching departures from BVG API... ");
     WiFiClientSecure client;
     client.setInsecure();
@@ -106,17 +104,32 @@ void getDepartureMinutes() {
 
     http.useHTTP10(true);
 
-    String url = "https://v6.bvg.transport.rest/stops/900009102/departures?direction=900009104&duration=45&bus=false&linesOfStops=false&remarks=false&language=en";
+
+    // List of all supported transport types
+    const char* types[] = {"bus", "subway", "tram", "ferry", "express", "regional"};
+    String url = "https://v6.bvg.transport.rest/stops/";
+    url += station;
+    url += "/departures?direction=";
+    url += direction;
+    url += "&duration=45";
+    for (size_t i = 0; i < sizeof(types)/sizeof(types[0]); ++i) {
+        url += "&";
+        url += types[i];
+        url += "=";
+        url += (strcmp(types[i], transportType) == 0) ? "true" : "false";
+    }
+    url += "&linesOfStops=false&remarks=false&language=en";
+
     http.begin(client, url);
 
     int httpCode = http.GET();
+    std::vector<int> minutesList;
     if (httpCode <= 0) {
         Serial.print("HTTP GET failed: ");
         Serial.println(http.errorToString(httpCode));
         http.end();
-        return;
+        return minutesList;
     }
-    
     // Read the entire response into a String
     String payload;
     Stream& responseStream = http.getStream();
@@ -133,25 +146,13 @@ void getDepartureMinutes() {
     if (error) {
         Serial.print("JSON parse failed: ");
         Serial.println(error.c_str());
-        return;
+        return minutesList;
     }
     JsonArray departures = doc["departures"].as<JsonArray>();
-    Serial.println("\n--- Departures ---");
     for (JsonObject departure : departures) {
-        const char* platform = departure["platform"] | "N/A";
         const char* when = departure["when"] | "N/A";
-        const char* lineName = departure["line"]["name"] | "?";
-        const char* direction = departure["direction"] | "?";
         int minutes = getMinutesFromNow(when);
-        Serial.print(lineName);
-        Serial.print(" -> ");
-        Serial.print(direction);
-        Serial.print(" | Platform: ");
-        Serial.print(platform);
-        Serial.print(" | When: ");
-        Serial.print(when);
-        Serial.print(" | Minutes from now: ");
-        Serial.println(minutes);
+        minutesList.push_back(minutes);
     }
-    Serial.println("------------------\n");
+    return minutesList;
 }

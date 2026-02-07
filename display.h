@@ -1,6 +1,4 @@
-#ifndef DISPLAY_H
-#define DISPLAY_H
-
+#include <vector>
 #include <ESP32-HUB75-MatrixPanel-I2S-DMA.h>
 #include <U8g2_for_Adafruit_GFX.h>
 
@@ -90,24 +88,20 @@ void initDisplay()
     u8g2.print(F("M13"));
     u8g2.setCursor(x, y + ROW_HEIGHT * 3);
     u8g2.print(F("50"));
-
-    // Minute displays (right side)
-    u8g2.setForegroundColor(white);
-    // U6
-    u8g2.setCursor(MINUTES_X, y + ROW_HEIGHT * 0);
-    u8g2.print(F("1,15,23"));
-    // U9
-    u8g2.setCursor(MINUTES_X, y + ROW_HEIGHT * 1);
-    u8g2.print(F("55,55,55"));
-    // M13
-    u8g2.setCursor(MINUTES_X, y + ROW_HEIGHT * 2);
-    u8g2.setForegroundColor(red);
-    u8g2.print(F("3"));
-    u8g2.setForegroundColor(white);
-    u8g2.print(F(",13,25"));
-    // 50
-    u8g2.setCursor(MINUTES_X, y + ROW_HEIGHT * 3);
-    u8g2.print(F("7,27,47"));
 }
 
-#endif
+// Display minutes for a given row, clearing the row first
+void displayMinutes(int row, const std::vector<int>& minutes) {
+    int y = 7 + ROW_HEIGHT * row;
+    // Clear the row area
+    dma_display->fillRect(MINUTES_X, row * ROW_HEIGHT, PANEL_RES_X - MINUTES_X, ROW_HEIGHT, black);
+    u8g2.setForegroundColor(white);
+    u8g2.setCursor(MINUTES_X, y);
+    for (size_t i = 0; i < minutes.size(); ++i) {
+        u8g2.print(minutes[i]);
+        if (i < minutes.size() - 1) 
+
+        if (i == 2) break; // Limit to 3
+        u8g2.print(",");
+    }
+}
