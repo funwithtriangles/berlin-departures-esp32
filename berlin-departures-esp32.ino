@@ -20,7 +20,8 @@ void loop()
     static unsigned long lastCheck = 0;
     if (millis() - lastCheck >= 15000)
     {
-        lastCheck = millis();
+
         getDepartureMinutes();
+        lastCheck = millis();
     }
 }
