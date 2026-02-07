@@ -96,57 +96,70 @@ void initWifi() {
 }
 
 #include <vector>
-std::vector<int> getDepartureMinutes(const char* transportType, const char* station, const char* direction) {
-    Serial.print("Fetching departures from BVG API... ");
+bool getDepartureMinutes(const char* transportType, const char* station, const char* direction, int fromWhen, std::vector<int>& minutesList) {
+    Serial.println("Fetching departures from BVG API... ");
+    minutesList.clear();
     WiFiClientSecure client;
     client.setInsecure();
+    client.setTimeout(15); // 15 second TLS timeout
     HTTPClient http;
 
     http.useHTTP10(true);
+    http.setTimeout(15000); // 15 second HTTP timeout
+    http.setFollowRedirects(HTTPC_STRICT_FOLLOW_REDIRECTS);
 
 
     // List of all supported transport types
     const char* types[] = {"bus", "subway", "tram", "ferry", "express", "regional"};
+    // Calculate 'when' parameter as URL-encoded ISO8601 string
+    // e.g. 2026-02-07T17%3A44%3A00%2B01%3A00
+    time_t now = time(NULL);
+    time_t whenTs = now + fromWhen * 60; // fromWhen is in minutes
+    time_t localWhenTs = whenTs + TIMEZONE_OFFSET;
+    struct tm tmBuf;
+    gmtime_r(&localWhenTs, &tmBuf);
+    int tzH = TIMEZONE_OFFSET / 3600;
+    int tzM = (TIMEZONE_OFFSET % 3600) / 60;
+    char whenStr[64];
+    snprintf(whenStr, sizeof(whenStr),
+        "%04d-%02d-%02dT%02d%%3A%02d%%3A%02d%%2B%02d%%3A%02d",
+        tmBuf.tm_year + 1900, tmBuf.tm_mon + 1, tmBuf.tm_mday,
+        tmBuf.tm_hour, tmBuf.tm_min, tmBuf.tm_sec,
+        tzH, tzM);
+
     String url = "https://v6.bvg.transport.rest/stops/";
     url += station;
     url += "/departures?direction=";
     url += direction;
-    url += "&duration=45";
+    url += "&when=";
+    url += whenStr;
     for (size_t i = 0; i < sizeof(types)/sizeof(types[0]); ++i) {
         url += "&";
         url += types[i];
         url += "=";
         url += (strcmp(types[i], transportType) == 0) ? "true" : "false";
     }
-    url += "&linesOfStops=false&remarks=false&language=en";
+    url += "&linesOfStops=false&remarks=false&duration=60&results=3";
 
     http.begin(client, url);
+    Serial.println(url);
 
     int httpCode = http.GET();
-    std::vector<int> minutesList;
-    if (httpCode <= 0) {
-        Serial.print("HTTP GET failed: ");
-        Serial.println(http.errorToString(httpCode));
+    if (httpCode != 200) {
+        Serial.print("HTTP GET failed, code: ");
+        Serial.println(httpCode);
         http.end();
-        return minutesList;
+        return false;
     }
-    // Read the entire response into a String
-    String payload;
-    Stream& responseStream = http.getStream();
-    unsigned long startMillis = millis();
-    while (http.connected() && (millis() - startMillis < 10000)) {
-        while (responseStream.available()) {
-            char c = responseStream.read();
-            payload += c;
-        }
-    }
+    // Read full response then parse JSON
+    String payload = http.getString();
     http.end();
     JsonDocument doc;
     DeserializationError error = deserializeJson(doc, payload);
     if (error) {
         Serial.print("JSON parse failed: ");
         Serial.println(error.c_str());
-        return minutesList;
+        return false;
     }
     JsonArray departures = doc["departures"].as<JsonArray>();
     for (JsonObject departure : departures) {
@@ -154,5 +167,5 @@ std::vector<int> getDepartureMinutes(const char* transportType, const char* stat
         int minutes = getMinutesFromNow(when);
         minutesList.push_back(minutes);
     }
-    return minutesList;
+    return true;
 }

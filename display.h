@@ -99,9 +99,8 @@ void displayMinutes(int row, const std::vector<int>& minutes) {
     u8g2.setCursor(MINUTES_X, y);
     for (size_t i = 0; i < minutes.size(); ++i) {
         u8g2.print(minutes[i]);
-        if (i < minutes.size() - 1) 
-
-        if (i == 3) break; // Limit to 4
-        u8g2.print(",");
+        if (i < minutes.size() - 1) {
+            u8g2.print(",");
+        }
     }
 }

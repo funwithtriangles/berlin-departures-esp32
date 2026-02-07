@@ -5,11 +5,10 @@
 // https://petstore.swagger.io/?url=https%3A%2F%2Fv6.bvg.transport.rest%2F.well-known%2Fservice-desc%0A#/default/get_stops
 #define LEO "900009102"
 #define LEO_DIR "900009104" // DIR is the next stop on the line in that direction
-
 #define AMRUMER "900009101"
 #define AMRUMER_DIR "900001201"
-
-std::vector<int> mins;
+#define AMRUMER_SEESTR "900009105"
+#define AMRUMER_SEESTR_DIR "900009103"
 
 void setup()
 {
@@ -32,10 +31,15 @@ void loop()
     {
         lastCheck = millis();
 
-        mins = getDepartureMinutes("subway", LEO, LEO_DIR);
-        displayMinutes(0, mins);
+        std::vector<int> mins;
 
-        mins = getDepartureMinutes("subway", AMRUMER, AMRUMER_DIR);
-        displayMinutes(1, mins);
+        if (getDepartureMinutes("subway", LEO, LEO_DIR, 9, mins))
+            displayMinutes(0, mins);
+
+        if (getDepartureMinutes("subway", AMRUMER, AMRUMER_DIR, 9, mins))
+            displayMinutes(1, mins);
+
+        if (getDepartureMinutes("tram", AMRUMER_SEESTR, AMRUMER_SEESTR_DIR, 3, mins))
+            displayMinutes(2, mins);
     }
 }
